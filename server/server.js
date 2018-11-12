@@ -8,6 +8,12 @@ const {Players} = require('./player');
 const hostname = '127.0.0.1';
 const port = 3000;
 
+const players = new Players();
+
+var MongoCliennt = require('mongodb').MongoClient;
+var mongoose = require('mongoose');
+var url = "mongodb://localhost:27017/";
+
 const server = http.createServer((req, res) => {
   res.statusCode = 200;
   res.setHeader('Content-Type', 'text/plain');
@@ -17,7 +23,6 @@ const server = http.createServer((req, res) => {
 var os = require('os');
 var ifaces = os.networkInterfaces();
 var ipAddress ='192.168.1.11';
-
 
 Object.keys(ifaces).forEach(function (ifname) {
   var alias = 0;
@@ -41,5 +46,6 @@ Object.keys(ifaces).forEach(function (ifname) {
 });});
 
 server.listen(3000, ipAddress || 'localhost',function() {
-    console.log('Application worker ' + process.pid + ' started...');
+	//console.log('Application worker ' + process.pid + ' started...');
+	console.log('App started on port ' + port);
 });
