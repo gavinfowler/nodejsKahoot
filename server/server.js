@@ -13,7 +13,7 @@ const port = 3000;
 const players = new Players();
 const game = new Games();
 
-var MongoCliennt = require('mongodb').MongoClient;
+var mongoClient = require('mongodb').MongoClient;
 var mongoose = require('mongoose');
 var url = "mongodb://localhost:27017/";
 
@@ -57,8 +57,54 @@ server.listen(port, () =>{
 
 io.on('connection', (socket) =>{
   console.log('a user connected');
+  mongoClient.connect(url, {useNewUrlParser:true});
+  console.log('connect');
   socket.on('disconnect', () =>{
     console.log('user disconnected');
   });
-  //TODO: need to 
-});
+  socket.on('host-join', (data)=>{
+    mongoClient.connect(url,{useNewUrlParser:true}, function(err, db){
+      if(err) throw err;
+      var dbo = db.db("KahootDB");
+      var query = {id:parseInt(data.id)};
+      dbo.collection('KahootGames').find(query).toArray(function(err, result){
+        if(err) throw err;
+        if(result[0] !== undefined){
+          var gamePin = Math.floor(Math.random()*90000)+10000;
+          game.addGame(gamePin, socket.id, false, {playersAnswered:0, questionLive: false, gameid: data.id, question: 1});
+          console.log('Game creaetd with pin: ', game.pin);
+          socket.emit('showGamePin', {
+            pin:game.pin
+          });
+        }else{
+          socket.emit('noGameFound');
+        }
+        db.close();
+      });
+    });
+  });
+  socket.on('newQuiz', function(data){
+    console.log('here');
+    mongoClient.connect(url, function(err, db){
+        if (err) throw err;
+        var dbo = db.db('kahootDB');
+        dbo.collection('kahootGames').find({}).toArray(function(err, result){
+            if(err) throw err;
+            var num = Object.keys(result).length;
+            if(num == 0){
+              data.id = 1
+              num = 1
+            }else{
+              data.id = result[num -1 ].id + 1;
+            }
+            var game = data;
+            dbo.collection("kahootGames").insertOne(game, function(err, res) {
+                if (err) throw err;
+                db.close();
+            });
+            db.close();
+            socket.emit('startGameFromCreator', num);
+        });
+      });
+    });
+  });
