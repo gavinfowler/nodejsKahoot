@@ -56,12 +56,6 @@ server.listen(port, () =>{
 });
 
 io.on('connection', (socket) =>{
-  console.log('a user connected');
-  mongoClient.connect(url, {useNewUrlParser:true});
-  console.log('connect');
-  socket.on('disconnect', () =>{
-    console.log('user disconnected');
-  });
   socket.on('host-join', (data)=>{
     mongoClient.connect(url,{useNewUrlParser:true}, function(err, db){
       if(err) throw err;
@@ -84,7 +78,6 @@ io.on('connection', (socket) =>{
     });
   });
   socket.on('newQuiz', function(data){
-    console.log('here');
     mongoClient.connect(url, function(err, db){
         if (err) throw err;
         var dbo = db.db('kahootDB');
@@ -107,4 +100,17 @@ io.on('connection', (socket) =>{
         });
       });
     });
+    socket.on('requestDbNames', function(){
+        
+      mongoClient.connect(url, function(err, db){
+          if (err) throw err;
+  
+          var dbo = db.db('kahootDB');
+          dbo.collection("kahootGames").find().toArray(function(err, res) {
+              if (err) throw err;
+              socket.emit('gameNamesData', res);
+              db.close();
+          });
+      });   
   });
+});
